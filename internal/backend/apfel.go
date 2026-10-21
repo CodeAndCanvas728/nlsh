@@ -44,6 +44,12 @@ type ApfelLauncher struct {
 	// command runs the apfel binary. It is a field so that tests can
 	// substitute a fake.
 	command func(name string, args ...string) *exec.Cmd
+
+	// probe reports whether something is answering at the endpoint and
+	// whether it is apfel. It is a field so that the tests can say what
+	// is on the other end without depending on what happens to be
+	// listening on the machine.
+	probe func(ctx context.Context) (served bool, isApfel bool, err error)
 }
 
 // DefaultApfelTimeout is how long the launcher waits for apfel to answer.
@@ -59,7 +65,10 @@ func (l *ApfelLauncher) Ensure(ctx context.Context) error {
 		return nil
 	}
 
-	served, isApfel, err := l.probe(ctx)
+	// Look before deciding. If apfel is already answering there is
+	// nothing to start, and the URL needs no port: a server on the
+	// default port is still a server.
+	served, isApfel, err := l.check(ctx)
 	if err != nil {
 		return err
 	}
@@ -71,11 +80,15 @@ func (l *ApfelLauncher) Ensure(ctx context.Context) error {
 			"stop that server or point NLSH_BASE_URL somewhere else", l.BaseURL)
 	}
 
-	binary, err := l.findApfel()
+	// Nothing is answering, so apfel has to be started, and starting it
+	// needs a port to listen on. A URL without an explicit port does not
+	// say where that is.
+	port, err := l.port()
 	if err != nil {
 		return err
 	}
-	port, err := l.port()
+
+	binary, err := l.findApfel()
 	if err != nil {
 		return err
 	}
@@ -101,7 +114,7 @@ func (l *ApfelLauncher) Ensure(ctx context.Context) error {
 			return ctx.Err()
 		case <-time.After(500 * time.Millisecond):
 		}
-		_, isApfel, err := l.probe(ctx)
+		_, isApfel, err := l.check(ctx)
 		if err == nil && isApfel {
 			return nil
 		}
@@ -127,9 +140,21 @@ func (l *ApfelLauncher) logf(format string, args ...any) {
 	}
 }
 
-// probe reports whether anything is serving at the URL, and whether it is
-// apfel.
-func (l *ApfelLauncher) probe(ctx context.Context) (served bool, isApfel bool, err error) {
+// check reports whether something is answering at the endpoint, and whether
+// it is apfel.
+//
+// There is one way to probe, so the two places that need to probe cannot
+// drift apart. The probe field is nil in production and set by the tests.
+func (l *ApfelLauncher) check(ctx context.Context) (served bool, isApfel bool, err error) {
+	if l.probe != nil {
+		return l.probe(ctx)
+	}
+	return l.probeEndpoint(ctx)
+}
+
+// probeEndpoint reports whether anything is answering at the URL, and
+// whether it is apfel.
+func (l *ApfelLauncher) probeEndpoint(ctx context.Context) (served bool, isApfel bool, err error) {
 	client := &http.Client{Timeout: 3 * time.Second}
 	root := serverRoot(l.BaseURL)
 	for _, path := range []string{"/health", "/v1/models"} {

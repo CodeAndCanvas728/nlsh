@@ -146,6 +146,19 @@ func analyze(tokens []string) Segment {
 	return seg
 }
 
+// IsPOSIX reports whether a shell is one that understands POSIX shell
+// syntax.
+//
+// It matters for the tests that run commands: the Windows profile runs
+// PowerShell, where POSIX commands and flags do not exist.
+func IsPOSIX(path string) bool {
+	switch filepath.Base(path) {
+	case "sh", "bash", "zsh", "dash", "ksh", "ash", "busybox":
+		return true
+	}
+	return false
+}
+
 // FirstBinary returns the program the command line runs, skipping
 // assignments and wrappers. It reports false when no program could be
 // identified.

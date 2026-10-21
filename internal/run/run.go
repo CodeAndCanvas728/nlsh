@@ -11,7 +11,7 @@ import (
 	"io"
 	"os/exec"
 
-	"github.com/jonah/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
 )
 
 // Execute runs the commands in order and returns the exit status of the

@@ -5,12 +5,30 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jonah/nlsh/internal/cli"
-	"github.com/jonah/nlsh/internal/plan"
-	"github.com/jonah/nlsh/internal/platform"
-	"github.com/jonah/nlsh/internal/report"
-	"github.com/jonah/nlsh/internal/validate"
+	"github.com/CodeAndCanvas728/nlsh/internal/cli"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/report"
+	"github.com/CodeAndCanvas728/nlsh/internal/shell"
+	"github.com/CodeAndCanvas728/nlsh/internal/validate"
 )
+
+// requirePOSIXShell skips the test when the platform's shell is not POSIX.
+//
+// These tests run real commands and check real tools: `ls --not-a-real-flag`
+// is only an invalid flag because BSD and GNU ls both reject it, and
+// `false` and `sh` are POSIX programs. The Windows profile runs PowerShell,
+// where none of that holds.
+func requirePOSIXShell(t *testing.T) {
+	t.Helper()
+	sh := platform.Current().Shell()
+	if len(sh) == 0 {
+		t.Skip("the current platform has no shell: skipping the tests that run commands")
+	}
+	if !shell.IsPOSIX(sh[0]) {
+		t.Skipf("%s is not a POSIX shell: skipping the tests that run commands", sh[0])
+	}
+}
 
 // fakePlanner returns canned plans and records what it was asked.
 type fakePlanner struct {
@@ -41,10 +59,13 @@ func newTestApp(t *testing.T, opts cli.Options, planner *fakePlanner) (*App, *st
 	t.Helper()
 	var out, errOut strings.Builder
 	reporter := report.New(&out, &errOut, opts.PrintMode)
+	// The profile of the machine the test runs on, so that the commands
+	// the tests execute go through a shell that exists.
+	profile := platform.Current()
 	return &App{
-		Profile:  platform.Darwin,
+		Profile:  platform.Current(),
 		Planner:  planner,
-		Checker:  validate.New(platform.Darwin),
+		Checker:  validate.New(profile),
 		Reporter: reporter,
 		Options:  opts,
 		Out:      &out,
@@ -53,6 +74,7 @@ func newTestApp(t *testing.T, opts cli.Options, planner *fakePlanner) (*App, *st
 }
 
 func TestPrintModeWritesOnlyCommandsToStdout(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "ls -l", Risk: "safe"}},
 		Explanation: "List the files.",
@@ -75,6 +97,7 @@ func TestPrintModeWritesOnlyCommandsToStdout(t *testing.T) {
 }
 
 func TestPrintModeExitsTwoWhenIssuesRemain(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "ls --not-a-real-flag", Risk: "safe"}},
 		Explanation: "List it.",
@@ -91,6 +114,7 @@ func TestPrintModeExitsTwoWhenIssuesRemain(t *testing.T) {
 }
 
 func TestSudoIsRefused(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "sudo rm -rf /", Risk: "destructive"}},
 		Explanation: "Remove everything.",
@@ -107,6 +131,7 @@ func TestSudoIsRefused(t *testing.T) {
 }
 
 func TestDryRunRunsNothing(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "echo hello", Risk: "safe"}},
 		Explanation: "Say hello.",
@@ -126,6 +151,7 @@ func TestDryRunRunsNothing(t *testing.T) {
 }
 
 func TestForceRunsTheCommands(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "echo hello", Risk: "safe"}},
 		Explanation: "Say hello.",
@@ -142,6 +168,7 @@ func TestForceRunsTheCommands(t *testing.T) {
 }
 
 func TestFailedCommandPropagatesItsStatus(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{{
 		Commands:    []plan.Command{{Command: "sh -c 'exit 3'", Risk: "safe"}},
 		Explanation: "Fail.",
@@ -155,6 +182,7 @@ func TestFailedCommandPropagatesItsStatus(t *testing.T) {
 }
 
 func TestValidationFailureTriggersOneRegeneration(t *testing.T) {
+	requirePOSIXShell(t)
 	planner := &fakePlanner{plans: []plan.Plan{
 		{
 			Commands:    []plan.Command{{Command: "definitely-not-a-real-binary --wat", Risk: "safe"}},

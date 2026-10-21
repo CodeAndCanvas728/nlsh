@@ -1,0 +1,64 @@
+# GitHub-side release.
+#
+# The development forge is the primary one and runs the CI in
+# .forgejo/workflows/. This file is the one GitHub runs: the repository
+# reaches GitHub through a push mirror, so the tag that triggers this
+# workflow is the tag pushed to the development forge.
+#
+# Which directory each forge reads is not assumed. It was measured on the
+# development forge: three tags were pushed while both release workflows
+# were present, and it ran exactly one release workflow for each — always
+# the one cloning forgejo/release-action. The .github/workflows/ copy was
+# never picked up.
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: build and publish the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # Nothing is published unless the checks pass first.
+      - name: check
+        run: make check
+
+      # The build lives in a script so that the release is the same
+      # everywhere it is produced.
+      - name: build
+        run: scripts/build-release.sh dist
+
+      - name: publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/SHA256SUMS
+          generate_release_notes: true
+          body: |
+            ## nlsh ${{ github.ref_name }}
+
+            A natural-language shell: describe what you want, the plan is
+            checked locally, shown to you, and run once you approve it.
+
+            Download the binary for your platform, then check SHA256SUMS
+            against it.
+
+            ```sh
+            tar -xzf nlsh-linux-amd64.tar.gz
+            ./nlsh --help
+            ```

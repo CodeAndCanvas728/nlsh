@@ -1,6 +1,9 @@
 package platform
 
-import "testing"
+import (
+	"os/exec"
+	"testing"
+)
 
 func TestUnixDestructiveDetection(t *testing.T) {
 	cases := []struct {
@@ -133,5 +136,21 @@ func TestShellIncludesCommandFlag(t *testing.T) {
 	}
 	if got := Windows.Shell(); got[len(got)-1] != "-Command" {
 		t.Errorf("windows shell %v does not end in -Command", got)
+	}
+}
+
+// TestCurrentProfileHasItsShell guards against a profile naming a shell
+// that is not on the machine.
+//
+// The tests run real commands through the profile of the machine they run
+// on, so a profile that asks for a shell the host does not have makes the
+// suite fail on every other platform.
+func TestCurrentProfileHasItsShell(t *testing.T) {
+	shell := Current().Shell()
+	if len(shell) == 0 {
+		t.Fatal("the current profile has no shell")
+	}
+	if _, err := exec.LookPath(shell[0]); err != nil {
+		t.Errorf("the current profile runs commands through %s, which is not on this machine", shell[0])
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jonah/nlsh/internal/shell"
+	"github.com/CodeAndCanvas728/nlsh/internal/shell"
 )
 
 // unixDestructivePatterns are the destructive commands nlsh recognises on

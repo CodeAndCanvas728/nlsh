@@ -29,6 +29,38 @@ make test       # tests only
 
 `make check` is the gate. `gofmt -l .` must print nothing.
 
+## CI
+
+`.forgejo/workflows/` holds the workflows. `.github/workflows/` is not
+picked up by the development forge — measured, not assumed: three tags
+were pushed while both release workflows were present and the forge ran
+exactly one release workflow for each, always the one cloning
+`forgejo/release-action`.
+`ci.yaml` runs format, vet, test, the race detector and a build as separate
+jobs, so a red build names the check that failed. The race-detector job
+installs a C compiler if the runner has none, and fails if it cannot: a
+green race job that quietly did not run the detector would make the
+release gate mean less than it looks.
+
+The release is published by GitHub, from `.github/workflows/release.yaml`.
+The repository reaches GitHub through a Forgejo push mirror, so a `v*` tag
+pushed to Forgejo arrives on GitHub and the six binaries are published
+there. That workflow cross-compiles every target on ubuntu and runs
+`make check` first, so Windows is cross-built even though the instance has
+no Windows runner.
+
+The instance has an `ubuntu-latest` runner and a `macos` one, which is a
+Mac: the Darwin profile and the zsh path are covered by the macOS job.
+
+**Merge with squash.** The repository allows squash merges only — merge,
+rebase and fast-forward are off. An early version of the release script
+left a 7.4 MB compiled binary in the repository, and the branch history
+was rewritten to drop it, because the release tag carries the history into
+the public copy.
+
+`docs/releasing.md` records how to cut a release, and how to check that
+the mirror and the two workflow directories are still set as they are.
+
 ## The rules that are easy to break
 
 **stdout carries commands, stderr carries everything else.** In `--print`

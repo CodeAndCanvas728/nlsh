@@ -4,7 +4,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/jonah/nlsh/internal/guard"
+	"github.com/CodeAndCanvas728/nlsh/internal/guard"
 )
 
 // Style renders text with ANSI escapes, or without them when the output is

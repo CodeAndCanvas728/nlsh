@@ -12,12 +12,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jonah/nlsh/internal/app"
-	"github.com/jonah/nlsh/internal/backend"
-	"github.com/jonah/nlsh/internal/cli"
-	"github.com/jonah/nlsh/internal/platform"
-	"github.com/jonah/nlsh/internal/report"
-	"github.com/jonah/nlsh/internal/validate"
+	"github.com/CodeAndCanvas728/nlsh/internal/app"
+	"github.com/CodeAndCanvas728/nlsh/internal/backend"
+	"github.com/CodeAndCanvas728/nlsh/internal/cli"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/report"
+	"github.com/CodeAndCanvas728/nlsh/internal/validate"
 )
 
 func main() {

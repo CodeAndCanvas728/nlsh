@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jonah/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
 )
 
 // SystemPrompt returns the instruction sent to the planner.

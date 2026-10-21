@@ -2,6 +2,10 @@
 /nlsh
 /dist/
 /build/
+# Release binaries, if a build is run from the repository root
+/nlsh-darwin-*
+/nlsh-linux-*
+/nlsh-windows-*
 
 # Go
 *.test

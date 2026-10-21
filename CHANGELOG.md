@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ## [0.3.0] — 2026-10-21
 
 The first release of the Go rewrite. The Swift implementation in `legacy/`
@@ -23,11 +25,39 @@ is kept for reference while the port is validated.
 - Tests for the validator, the risk classifier, the command-line parser, the
   shell tokenizer and the whole plan/validate/approve/run pipeline, driven
   by a fake OpenAI-compatible server.
-- CI for macOS, Linux and Windows; a release workflow that builds six
-  binaries with checksums; a Homebrew formula.
+- CI on ubuntu and on macOS; a release workflow that builds the six
+  binaries with checksums and publishes them from GitHub; a Homebrew
+  formula.
 
 ### Fixed
 
+- nlsh no longer crashes when it starts apfel. The launcher reached for the
+  probe field directly in the wait loop after starting the server, and the
+  field is nil in production, so the on-device flow died with a nil pointer
+  dereference and left an orphan server running. There is now one way to
+  probe, and the start path is covered by a test that uses the real one.
+- The apfel launcher asks the endpoint before it works out the port, so a
+  server that is already answering is accepted even when the URL does not
+  name a port. The launcher only needs a port when it has to start apfel.
+- The apfel tests no longer depend on what happens to be listening on the
+  machine: the probe is injected, so "apfel is serving" and "nothing is
+  serving" are both stated by the test rather than by the environment.
+- The tests that run commands skip on a platform whose shell is not POSIX.
+  They use `false`, `sh` and `ls --not-a-real-flag`, which do not exist
+  under the Windows profile's PowerShell.
+- The `--backend` option is gone. It was accepted and stored but never read,
+  so it silently did nothing.
+- The release build is static: `CGO_ENABLED=0`, so the binary runs on a
+  machine with a different libc from the one that built it.
+- The release build starts from an empty directory, so a stale archive from
+  an earlier build cannot end up in the checksums, and it says so when
+  `zip` or `sha256sum` is missing instead of failing at tag time.
+- The checksums name the files without a `./` prefix.
+- The CI pins the Go version from `go.mod` instead of "stable", and one
+  job runs `go test ./...` over every package rather than a hardcoded list
+  that a new package would fall out of.
+- The release runs `make check` before it publishes anything, and has a
+  timeout.
 - The `--print` mode no longer writes the progress messages to stdout, so
   the zsh integration pastes the command and nothing else into the buffer.
 - The OpenAI-compatible backend now records the assistant's own replies, so
@@ -48,6 +78,28 @@ is kept for reference while the port is validated.
 - An option after the request is reported instead of being sent to the model
   as part of the request.
 - An unrecognised risk label is treated as careful rather than safe.
+- The tests ran real commands through the macOS profile, whose shell is
+  `/bin/zsh`. The suite now uses the profile of the machine it runs on, and a
+  test checks that the profile names a shell the machine actually has.
+- The release build was broken in both forges: the target list is `os-arch`
+  but the script split it as if it were `os/arch`, so `GOOS` came out as
+  `darwin-arm64` and the build stopped on the first target; and `go build`
+  does not add an extension to `-o`, so the Windows binary was never named
+  `.exe`. The build now lives in `scripts/build-release.sh`, which the
+  GitHub release workflow calls, and each archive holds one binary called
+  `nlsh`.
+
+### Changed
+
+- The release is published by GitHub, not by Forgejo. The repository reaches
+  GitHub through a Forgejo push mirror, so a `v*` tag pushed to Forgejo
+  arrives on GitHub and the six binaries are published there. The
+  documentation and the Homebrew formula point at the GitHub releases,
+  which is where the assets are.
+- The repository is set to squash merges and to delete the branch after a
+  merge. An early version of the release script left a compiled binary in
+  the repository, and it is in the history of the branch; a squash merge
+  keeps it out of `main`.
 
 ### Known limitations
 
@@ -57,4 +109,4 @@ is kept for reference while the port is validated.
 - The validator shells out to each command's `--help`, which is slow for
   tools with large help output.
 
-[0.3.0]: https://github.com/jonah/nlsh/releases/tag/v0.3.0
+[0.3.0]: https://github.com/CodeAndCanvas728/nlsh/releases/tag/v0.3.0

@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jonah/nlsh/internal/plan"
-	"github.com/jonah/nlsh/internal/platform"
-	"github.com/jonah/nlsh/internal/shell"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/shell"
 )
 
 // helpTimeout bounds how long nlsh waits for a tool's --help output.

@@ -30,8 +30,6 @@ type Options struct {
 	ShowHelp bool
 	// ShowShellInit asks for the shell integration script.
 	ShowShellInit bool
-	// Backend selects the planner: "auto", "openai" or "foundation".
-	Backend string
 	// BaseURL is the OpenAI-compatible endpoint to use.
 	BaseURL string
 	// APIKey is sent as a bearer token.
@@ -53,7 +51,6 @@ var knownFlags = map[string]bool{
 	"-p": true, "--print": true,
 	"-h": true, "--help": true,
 	"-v": true, "--version": true,
-	"--backend":  true,
 	"--base-url": true,
 	"--api-key":  true,
 	"--model":    true,
@@ -100,8 +97,6 @@ func Parse(args []string) (Options, error) {
 				o.ShowVersion = true
 			case "--zsh-init":
 				o.ShowShellInit = true
-			case "--backend":
-				o.Backend = value
 			case "--base-url":
 				o.BaseURL = value
 			case "--api-key":
@@ -139,7 +134,7 @@ func Parse(args []string) (Options, error) {
 func takeValue(args []string, i *int) (string, error) {
 	name := args[*i]
 	switch name {
-	case "--backend", "--base-url", "--api-key", "--model", "--timeout":
+	case "--base-url", "--api-key", "--model", "--timeout":
 	default:
 		// A flag without a value.
 		return "", nil

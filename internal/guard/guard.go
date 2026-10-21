@@ -9,8 +9,8 @@ package guard
 import (
 	"strings"
 
-	"github.com/jonah/nlsh/internal/plan"
-	"github.com/jonah/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
 )
 
 // Risk is how much a command should be trusted.

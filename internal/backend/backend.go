@@ -10,7 +10,7 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/jonah/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
 )
 
 // Planner turns a request into a plan.

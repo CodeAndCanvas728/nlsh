@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/jonah/nlsh/internal/shell"
+	"github.com/CodeAndCanvas728/nlsh/internal/shell"
 )
 
 // Windows describes a Windows host driven through PowerShell.

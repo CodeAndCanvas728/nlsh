@@ -3,8 +3,8 @@ package guard
 import (
 	"testing"
 
-	"github.com/jonah/nlsh/internal/plan"
-	"github.com/jonah/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
 )
 
 func TestFromTag(t *testing.T) {

@@ -10,14 +10,14 @@ import (
 	"io"
 	"strings"
 
-	"github.com/jonah/nlsh/internal/backend"
-	"github.com/jonah/nlsh/internal/cli"
-	"github.com/jonah/nlsh/internal/guard"
-	"github.com/jonah/nlsh/internal/plan"
-	"github.com/jonah/nlsh/internal/platform"
-	"github.com/jonah/nlsh/internal/report"
-	"github.com/jonah/nlsh/internal/run"
-	"github.com/jonah/nlsh/internal/validate"
+	"github.com/CodeAndCanvas728/nlsh/internal/backend"
+	"github.com/CodeAndCanvas728/nlsh/internal/cli"
+	"github.com/CodeAndCanvas728/nlsh/internal/guard"
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
+	"github.com/CodeAndCanvas728/nlsh/internal/platform"
+	"github.com/CodeAndCanvas728/nlsh/internal/report"
+	"github.com/CodeAndCanvas728/nlsh/internal/run"
+	"github.com/CodeAndCanvas728/nlsh/internal/validate"
 )
 
 // Exit codes. Anything else is the exit status of the last command that ran.
