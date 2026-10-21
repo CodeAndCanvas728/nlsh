@@ -1,0 +1,15 @@
+# Build output
+/nlsh
+/dist/
+/build/
+
+# Go
+*.test
+*.out
+coverage.txt
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
