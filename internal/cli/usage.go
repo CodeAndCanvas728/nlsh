@@ -6,7 +6,7 @@ package cli
 // written down. It cannot be stamped at build time: a linker flag sets a
 // string variable, not a constant, and the constant is what the usage text
 // is built from. The release script checks the tag against it instead.
-const Version = "0.3.0"
+const Version = "0.3.1"
 
 // Usage is the text shown by --help.
 const Usage = `nlsh ` + Version + ` — say what you want; it runs the commands.

@@ -70,7 +70,7 @@ sudo mv nlsh /usr/local/bin/
 **Or install with Go:**
 
 ```sh
-go install github.com/CodeAndCanvas728/nlsh/cmd/nlsh@v0.3.0
+go install github.com/CodeAndCanvas728/nlsh/cmd/nlsh@v0.3.1
 ```
 
 **Or build it yourself:**
