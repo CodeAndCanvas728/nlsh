@@ -6,6 +6,44 @@ uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-10-22
+
+The fixes that came out of the review of the first release. The v0.3.0
+binaries are the ones before these; this is the release to use.
+
+### Fixed
+
+- `--timeout` was parsed and then never read, so a command that took a long
+  time took as long as it liked. Each command now gets the limit, a command
+  that runs out of time is reported as such, and the run stops with the
+  status 124.
+- The command is stopped as a whole group, because a shell that forks leaves
+  the command running, still holding the output pipe, so the wait would not
+  return. The group is only signalled while the child is provably still
+  ours, so a kill cannot reach a process group whose id has been recycled.
+- On Windows the stop was a no-op: `os.Process.Signal` only supports Kill
+  there, so the liveness probe always failed and the group was never
+  stopped. The children are taken with it now, with `taskkill /T`.
+- An interrupt is no longer reported as a timeout: the run says which
+  command was interrupted and reports the command's own status.
+- A command killed by a signal is reported with the shell's convention for
+  one, 128 plus the signal number, instead of -1.
+- The Makefile no longer passes a `-X main.version` flag: there is no
+  `main.version`, the version is a constant in `internal/cli`, and the flag
+  was silently doing nothing. The version lives in the source alone, and
+  `make version` fails loudly rather than printing an empty line when it
+  cannot be read.
+- The release script reads the version the same way the Makefile does, and
+  checks the tag against it, so a tag that does not match the source stops
+  the build instead of publishing a release that says the wrong version.
+
+### Changed
+
+- The release is published by GitHub, through the Forgejo push mirror: a
+  `v*` tag pushed to Forgejo arrives on GitHub and the six binaries are
+  published there. The documentation and the Homebrew formula point at the
+  GitHub releases, which is where the assets are.
+
 ## [0.3.0] — 2026-10-21
 
 The first release of the Go rewrite. The Swift implementation in `legacy/`
@@ -109,4 +147,5 @@ is kept for reference while the port is validated.
 - The validator shells out to each command's `--help`, which is slow for
   tools with large help output.
 
+[0.3.1]: https://github.com/CodeAndCanvas728/nlsh/releases/tag/v0.3.1
 [0.3.0]: https://github.com/CodeAndCanvas728/nlsh/releases/tag/v0.3.0
