@@ -40,8 +40,8 @@ shown up if it had discovered `.github/workflows/` as well.
 2. Tag the merge commit and push the tag:
 
    ```sh
-   git tag -a v0.3.0 -m "v0.3.0" <merge-commit>
-   git push origin refs/tags/v0.3.0
+   git tag -a v0.3.1 -m "v0.3.1" <merge-commit>
+   git push origin refs/tags/v0.3.1
    ```
 
    Push the tag to the **development** forge, not to the public copy: the
@@ -53,13 +53,24 @@ shown up if it had discovered `.github/workflows/` as well.
 
    ```sh
    gh release list --repo CodeAndCanvas728/nlsh
-   gh release view v0.3.0 --repo CodeAndCanvas728/nlsh --json assets
+   gh release view v0.3.1 --repo CodeAndCanvas728/nlsh --json assets
    ```
 
 5. Update `homebrew/nlsh.rb`: the version, the tag in the URLs, and the
    checksums. The checksums are in the release's `SHA256SUMS` asset.
 6. Update `CHANGELOG.md`: move what is under `## [Unreleased]` into a new
    dated section, and add the link at the bottom.
+7. Commit the formula and move the tag onto that commit, then publish
+   again.
+
+Step 7 is not optional tidiness: the checksums of a release are only known
+once the release has been built, and the formula lives in the repository the
+release is built from. So the tag and the formula cannot be settled in one
+commit. Moving the tag is safe because the archives are reproducible —
+`scripts/build-release.sh` fixes the timestamps, the owner and the order —
+so a rebuild of the same source produces the same checksums. Check that
+before moving it, and check that the formula at the tag installs exactly
+what the tag published.
 
 The version in `internal/cli/usage.go` is the one the binary reports. The
 tag, the formula and that constant have to agree, and the release script

@@ -27,7 +27,10 @@ binaries are the ones before these; this is the release to use.
 - An interrupt is no longer reported as a timeout: the run says which
   command was interrupted and reports the command's own status.
 - A command killed by a signal is reported with the shell's convention for
-  one, 128 plus the signal number, instead of -1.
+  one, 128 plus the signal number, instead of -1. Windows has no signal
+  convention and no way to ask a process how it died, so a command that
+  was killed there is reported as 127 — "unknown" — rather than as a
+  signal that never happened.
 - The Makefile no longer passes a `-X main.version` flag: there is no
   `main.version`, the version is a constant in `internal/cli`, and the flag
   was silently doing nothing. The version lives in the source alone, and
