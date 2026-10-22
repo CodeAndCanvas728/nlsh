@@ -1,11 +1,22 @@
 BINARY := nlsh
 PKG := ./cmd/nlsh
+# The version lives in internal/cli/usage.go and is not stamped in at build
+# time: it is a constant, and a constant cannot be stamped by a linker flag.
+# The release script checks the tag against it instead.
 VERSION := $(shell sed -n 's/^const Version = "\(.*\)"/\1/p' internal/cli/usage.go)
-LDFLAGS := -s -w -X main.version=$(VERSION)
+LDFLAGS := -s -w
 
-.PHONY: all build test race vet fmt fmt-check lint check install clean release-dry-run
+.PHONY: all build test race vet fmt fmt-check check install clean version
 
 all: check build
+
+## version: print the version the source says
+version:
+	@test -n "$(VERSION)" || { \
+		echo "cannot read the version from internal/cli/usage.go" >&2; \
+		exit 1; \
+	}
+	@echo $(VERSION)
 
 ## build: compile the binary for this machine
 build:

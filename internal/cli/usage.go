@@ -1,6 +1,11 @@
 package cli
 
 // Version is the version of nlsh.
+//
+// It is a constant in the source, and it is the only place the version is
+// written down. It cannot be stamped at build time: a linker flag sets a
+// string variable, not a constant, and the constant is what the usage text
+// is built from. The release script checks the tag against it instead.
 const Version = "0.3.0"
 
 // Usage is the text shown by --help.

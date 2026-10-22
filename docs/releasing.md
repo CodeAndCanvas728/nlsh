@@ -62,7 +62,9 @@ shown up if it had discovered `.github/workflows/` as well.
    dated section, and add the link at the bottom.
 
 The version in `internal/cli/usage.go` is the one the binary reports. The
-tag, the formula and that constant have to agree.
+tag, the formula and that constant have to agree, and the release script
+checks the tag against it: a tag that does not match the source stops the
+build rather than publishing a release that says the wrong version.
 
 ## When a build fails
 
