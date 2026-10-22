@@ -4,11 +4,13 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/CodeAndCanvas728/nlsh/internal/cli"
 	"github.com/CodeAndCanvas728/nlsh/internal/plan"
 	"github.com/CodeAndCanvas728/nlsh/internal/platform"
 	"github.com/CodeAndCanvas728/nlsh/internal/report"
+	"github.com/CodeAndCanvas728/nlsh/internal/run"
 	"github.com/CodeAndCanvas728/nlsh/internal/shell"
 	"github.com/CodeAndCanvas728/nlsh/internal/validate"
 )
@@ -178,6 +180,32 @@ func TestFailedCommandPropagatesItsStatus(t *testing.T) {
 	status := a.Handle(context.Background(), "fail")
 	if status != 3 {
 		t.Errorf("status = %d, want 3", status)
+	}
+}
+
+// TestTimeoutReachesTheRunner is the test that was missing at the wiring
+// level: the --timeout option was parsed and then never used, so a slow
+// command ran for as long as it liked.
+func TestTimeoutReachesTheRunner(t *testing.T) {
+	requirePOSIXShell(t)
+	planner := &fakePlanner{plans: []plan.Plan{{
+		Commands:    []plan.Command{{Command: "sleep 30", Risk: "safe"}},
+		Explanation: "Wait for a while.",
+	}}}
+	a, _, errOut := newTestApp(t, cli.Options{Force: true, Timeout: 300 * time.Millisecond}, planner)
+
+	start := time.Now()
+	status := a.Handle(context.Background(), "wait for a while")
+	elapsed := time.Since(start)
+
+	if status != run.ExitTimedOut {
+		t.Errorf("status = %d, want %d (the timeout status)", status, run.ExitTimedOut)
+	}
+	if elapsed > 10*time.Second {
+		t.Errorf("the command ran for %s, want it stopped after the timeout", elapsed)
+	}
+	if !strings.Contains(errOut.String(), "timed out") {
+		t.Errorf("stderr = %q, want it to say the command timed out", errOut.String())
 	}
 }
 

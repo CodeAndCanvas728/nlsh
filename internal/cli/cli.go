@@ -108,6 +108,9 @@ func Parse(args []string) (Options, error) {
 				if err != nil {
 					return o, fmt.Errorf("--timeout expects a duration such as 30s or 5m, not %q", value)
 				}
+				if d < 0 {
+					return o, fmt.Errorf("--timeout cannot be negative, not %q", value)
+				}
 				o.Timeout = d
 			default:
 				return o, fmt.Errorf("unknown option %s", arg)

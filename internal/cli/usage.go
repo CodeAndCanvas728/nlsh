@@ -20,7 +20,7 @@ Options
   -f, --force    never ask, even for destructive commands (careful!)
   -n, --dry-run  show the plan, never execute it
   -p, --print    print commands only, no prompts (exit 2 if validation fails)
-  --timeout D    give up on a command after D (30s, 5m); 0 means no limit
+  --timeout D    give up on a command after D (30s, 5m); 0 means no limit, the default
   --zsh-init     print the zsh integration script (buffer insertion, Ctrl+O)
   -v, --version  print version
   -h, --help     show this help

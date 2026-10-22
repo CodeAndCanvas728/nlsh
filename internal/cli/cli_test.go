@@ -96,6 +96,7 @@ func TestParseRejectsBadInput(t *testing.T) {
 		{"missing value", []string{"--model"}, "expects a value"},
 		{"option after the request", []string{"hello", "--print"}, "after the request"},
 		{"bad timeout", []string{"--timeout", "soon", "hello"}, "duration"},
+		{"negative timeout", []string{"--timeout", "-5s", "hello"}, "negative"},
 	}
 
 	for _, tc := range cases {

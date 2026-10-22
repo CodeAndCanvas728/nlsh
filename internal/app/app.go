@@ -148,7 +148,7 @@ func (a *App) Handle(ctx context.Context, request string) int {
 		commands = edited
 	}
 
-	return run.Execute(ctx, a.Profile, commands, a.Out, a.Err)
+	return run.Execute(ctx, a.Profile, commands, a.Out, a.Err, a.Options.Timeout)
 }
 
 // risks returns the effective risk of every command in the plan.

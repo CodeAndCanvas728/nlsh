@@ -98,7 +98,7 @@ nlsh                                    # interactive, keeps the conversation
 | `-f`, `--force` | never ask, not even for destructive commands |
 | `-n`, `--dry-run` | show the plan, never execute it |
 | `-p`, `--print` | print the commands only, with no prompts |
-| `--timeout D` | give up on a command after D (`30s`, `5m`); `0` means no limit |
+| `--timeout D` | give up on a command after D (`30s`, `5m`); `0` means no limit, which is the default |
 | `--base-url URL` | the OpenAI-compatible endpoint to ask |
 | `--api-key KEY` | bearer token to send with the request |
 | `--model NAME` | the model to ask for |
@@ -253,6 +253,7 @@ Each platform has its own list.
 | `0` | the request was handled, or was cancelled |
 | `1` | no plan could be produced: no model configured, or the model failed |
 | `2` | the plan was rejected: validation issues remained, or it needed elevated privileges |
+| `124` | a command ran out of time (`--timeout`) |
 | other | the exit status of the last command that ran |
 
 That last row is what makes nlsh usable in a script: `nlsh "..."` fails when
