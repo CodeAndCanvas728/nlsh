@@ -11,24 +11,24 @@ class Nlsh < Formula
   on_macos do
     on_arm do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-darwin-arm64.tar.gz"
-      sha256 "e90decd5dfdb5cf46e7b9e9d5b43dc2de7d70444fc495eca280817a24bb01c56"
+      sha256 "feae64022f49289b8c58c3257af0c55f9b197b77c06cf4f60d99b35998db8451"
     end
 
     on_intel do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-darwin-amd64.tar.gz"
-      sha256 "19c9b10e2a70043038c8104bafbf9f4535fbf1a4229f89a5a22e2492c1ecf879"
+      sha256 "1d9f6ffe2bba685e76b6677188a19c1e4a37a06ef323befcab3ef511bf7ceb3b"
     end
   end
 
   on_linux do
     on_arm do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-linux-arm64.tar.gz"
-      sha256 "229ff1f09e14b00900985195a6130c669ad7548243c193deedfd6ea5633aa77c"
+      sha256 "9efcc9c707555e73fb64095baf8182b5b45fa7a7866af94c78eca74f61531bbf"
     end
 
     on_intel do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-linux-amd64.tar.gz"
-      sha256 "f573b16707c1325ef3ff019f97b9095452b352d3be988b9a20eccd09382b4120"
+      sha256 "03c7fc5f8c50f8b949745632efb71f7d4a93f49dc7e565cf7bc92a59c78915ce"
     end
   end
 
