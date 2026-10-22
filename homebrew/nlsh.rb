@@ -6,29 +6,29 @@ class Nlsh < Formula
   # The binaries are published by the GitHub workflow, reached through the
   # push mirror from the development forge. The archives are reproducible, so
   # rebuilding the same source gives the same checksums.
-  version "0.3.0"
+  version "0.3.1"
 
   on_macos do
     on_arm do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-darwin-arm64.tar.gz"
-      sha256 "afd219226a232e9f190fc5baf20f6a41728e242e5af34e770aa46729e93a0228"
+      sha256 "e90decd5dfdb5cf46e7b9e9d5b43dc2de7d70444fc495eca280817a24bb01c56"
     end
 
     on_intel do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-darwin-amd64.tar.gz"
-      sha256 "4e7b0698995b9c0a990e75c0d8136440a4a1b97ce427c6a96dfc68dc82d871d9"
+      sha256 "19c9b10e2a70043038c8104bafbf9f4535fbf1a4229f89a5a22e2492c1ecf879"
     end
   end
 
   on_linux do
     on_arm do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-linux-arm64.tar.gz"
-      sha256 "d9f2e907171b76e0e8e6c5307626257d8c32451907c6b4cfd7607ad1e8852509"
+      sha256 "229ff1f09e14b00900985195a6130c669ad7548243c193deedfd6ea5633aa77c"
     end
 
     on_intel do
       url "https://github.com/CodeAndCanvas728/nlsh/releases/download/v#{version}/nlsh-linux-amd64.tar.gz"
-      sha256 "2be182d3c37559865d156dd08d81668d641b058ffc36a6558899650872dc638c"
+      sha256 "f573b16707c1325ef3ff019f97b9095452b352d3be988b9a20eccd09382b4120"
     end
   end
 
