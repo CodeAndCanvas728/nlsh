@@ -21,10 +21,10 @@ for tool in zip sha256sum; do
 	}
 done
 
-# The tag, the version in the source and the Homebrew formula have to agree.
-# The version cannot be stamped into the binary at build time, so this is
-# where the agreement is checked instead.
-source_version="$(sed -n 's/^const Version = "\(.*\)"/\1/p' internal/cli/usage.go)"
+# The tag and the version in the source have to agree. The version cannot
+# be stamped into the binary at build time, so this is where the agreement
+# is checked instead. The Makefile reads it, and fails loudly if it cannot.
+source_version="$(make -s version)"
 if [ -z "$source_version" ]; then
 	echo "cannot read the version from internal/cli/usage.go" >&2
 	exit 1
