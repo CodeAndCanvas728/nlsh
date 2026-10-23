@@ -142,3 +142,46 @@ jobs:
           ./nlsh --version
           ./nlsh --help > /dev/null
           ./nlsh --zsh-init > /dev/null
+
+  # The Homebrew formula lives in this repository and is copied to the tap
+  # at every release. Nothing inside the tap can tell you that the copy is
+  # behind: the old asset reports the old version, and Homebrew derives that
+  # version from the URL in the old formula, so the two agree and nothing
+  # fails. The difference against this repository can.
+  # (`homebrew-nlsh` here is the same tap the README tells users to add
+  # as `CodeAndCanvas728/nlsh`.)
+  tap:
+    name: tap
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: the tap's formula is this one
+        run: |
+          # The version appears in four URLs; all four must carry the same
+          # tag, and that tag must match internal/cli/usage.go's Version.
+          # A release that bumps three of them leaves the fourth pointing
+          # at an old tag, and nothing else catches it.
+          versions=$(grep -o 'download/v[^/]*/' homebrew/nlsh.rb | sort -u || true)
+          expected="v$(sed -n 's/.*Version = "\([^"]*\)".*/\1/p' internal/cli/usage.go)"
+          if [ -z "$versions" ] || [ "$versions" != "download/$expected/" ]; then
+            echo "homebrew/nlsh.rb's URLs do not all carry $expected:"
+            printf '%s\n' "$versions"
+            exit 1
+          fi
+          # A clone rather than a fetch of the raw file: the raw file is
+          # served from a cache, so a tap that was updated a minute ago
+          # would still read as the old one.
+          if ! git clone --depth 1 -q https://github.com/CodeAndCanvas728/homebrew-nlsh.git /tmp/tap 2>/tmp/clone.err; then
+            echo "could not fetch the tap (network, rename, or private):"
+            cat /tmp/clone.err
+            exit 1
+          fi
+          if ! diff -u homebrew/nlsh.rb /tmp/tap/Formula/nlsh.rb; then
+            echo "the tap's formula is not this one."
+            echo "Copy homebrew/nlsh.rb to the tap and commit it there."
+            exit 1
+          fi
+          echo "the tap's formula matches this repository"

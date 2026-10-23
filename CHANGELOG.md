@@ -6,6 +6,18 @@ uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A Homebrew tap, at `CodeAndCanvas728/homebrew-nlsh`, and a CI job that
+  compares the formula in this repository against the copy in the tap, so a
+  tap that drifts from the repository fails the build rather than
+  installing an old build quietly. (The formula itself was already here.)
+
+### Changed
+
+- The install section of the README says how to install it with Homebrew
+  and what the tap is for.
+
 ## [0.3.1] — 2026-10-22
 
 The fixes that came out of the review of the first release. The v0.3.0

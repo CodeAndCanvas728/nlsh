@@ -12,15 +12,11 @@ and how to check that they still hold.
 | Developed on | a private forge — the only place it is pushed to |
 | Published from | `github.com/CodeAndCanvas728/nlsh` — the public copy, and where the release is published |
 
-The public copy is a **push mirror** of the development copy: every branch
-and every tag is carried over, so the public copy is never behind and
+The published copy is a **push mirror** of the development copy: every branch
+and every tag is carried over, so the published copy is never behind and
 nothing is private in the code itself. The mirror pushes over SSH with a
 deploy key scoped to this one repository, so the credential cannot reach
 anything else.
-
-The module path in `go.mod` is the public one,
-`github.com/CodeAndCanvas728/nlsh`, so that `go install` works for anyone
-and the public tree does not name a private host.
 
 ## Which directory each forge reads
 
@@ -56,12 +52,22 @@ shown up if it had discovered `.github/workflows/` as well.
    gh release view v0.3.1 --repo CodeAndCanvas728/nlsh --json assets
    ```
 
-5. Update `homebrew/nlsh.rb`: the version, the tag in the URLs, and the
-   checksums. The checksums are in the release's `SHA256SUMS` asset.
+5. Update `homebrew/nlsh.rb`: the tag in the four URLs (one per
+   platform/architecture combination), and the checksums. The version is
+   read from the URL by Homebrew, so there is no separate `version`
+   line to bump, but the tag has to be changed in all four places. The
+   `tap` job's first check catches intra-file drift (it requires all four
+   URLs to carry the same tag, matching `internal/cli/usage.go`), but it
+   cannot catch a consistent-but-stale bump, so the tag still has to be
+   changed deliberately in all four. The README's `go install …@v0.3.1`
+   line is a fifth place that carries the version and is not checked by
+   anything. The checksums are in the release's `SHA256SUMS` asset.
 6. Update `CHANGELOG.md`: move what is under `## [Unreleased]` into a new
    dated section, and add the link at the bottom.
 7. Commit the formula and move the tag onto that commit, then publish
    again.
+8. Copy the formula to the tap, `CodeAndCanvas728/homebrew-nlsh`, and commit
+   it there.
 
 Step 7 is not optional tidiness: the checksums of a release are only known
 once the release has been built, and the formula lives in the repository the
@@ -71,6 +77,75 @@ commit. Moving the tag is safe because the archives are reproducible —
 so a rebuild of the same source produces the same checksums. Check that
 before moving it, and check that the formula at the tag installs exactly
 what the tag published.
+
+Step 8 is what puts the formula in front of the people using Homebrew. The
+formula here is the source of truth; the tap holds the copy, so copy it
+rather than editing it there.
+
+```sh
+cp homebrew/nlsh.rb /path/to/homebrew-nlsh/Formula/nlsh.rb
+```
+
+**The diff against the copy is what catches a stale tap.** A tap that is a
+release behind downloads the old asset, the old binary reports the old
+version, and Homebrew derives that version from the URL in the old formula
+— so the two agree and nothing inside the tap can tell you it is behind.
+The difference against this repository can:
+
+```sh
+diff -u homebrew/nlsh.rb /path/to/homebrew-nlsh/Formula/nlsh.rb
+```
+
+The CI job `tap` does that same comparison on every push to `main`, so a
+tap that drifts from the repository fails the build rather than installing
+an old build quietly. Copy the formula and commit it in the tap, and the
+next run of the CI says whether it took.
+
+The `tap` job runs only on pushes to `main`, so `main` is red in the
+window between release steps 7 and 8, until the matching copy lands in
+the tap. That failure is expected and is not a broken build; it is the
+check that catches a forgotten copy. A formula-changing pull request is
+green, because the job does not run there.
+
+To check the tap file the way Homebrew would, use the checks that do not
+need the published assets — `brew style` and `brew audit --strict` read the
+formula and nothing else. They resolve a tap-qualified name, so the tap
+must be tapped first (`brew tap CodeAndCanvas728/nlsh`) and they only
+mean something after step 8 has landed the formula in the tap plus a
+local refresh (`brew update`); running them earlier checks the previous
+release's formula, not the one you edited. After the release this is
+post-release verification.
+
+```sh
+brew style CodeAndCanvas728/nlsh/nlsh
+brew audit --strict --formula CodeAndCanvas728/nlsh/nlsh
+```
+
+`brew install` is not a check: it installs. It also needs the published
+assets, so it cannot run against an uncommitted formula.
+
+Measured on Homebrew 7.0.10. The commands below are tap-qualified, so
+they resolve to whatever is checked out in the tap — which, at the time
+of measurement, still held the released formula carrying `version
+"0.3.1"`. They therefore confirm that `brew audit --strict` and `brew
+style` pass on the released form, and that Homebrew reports `0.3.1`,
+but they do not by themselves exercise the version-in-URL form now in
+the repository. The version-in-URL form is the same pattern Homebrew's
+own `Version.detect_from_url` handles (it strips up to the last
+`/download/` and reads `v0.3.1` from the remaining segment), which is
+why the runbook accepts it; the `test do` block is the check that
+actually exercises the derived version against the binary, run by
+`brew test` (manually, or by the tap's own CI if it has one) — nothing
+in this repository's CI runs it.
+
+```
+$ brew info --json=v2 CodeAndCanvas728/nlsh/nlsh
+... "version": "0.3.1" ...
+$ brew audit --strict --formula CodeAndCanvas728/nlsh/nlsh
+(no output, exit 0)
+$ brew style CodeAndCanvas728/nlsh/nlsh
+1 file inspected, no offenses detected
+```
 
 The version in `internal/cli/usage.go` is the one the binary reports. The
 tag, the formula and that constant have to agree, and the release script

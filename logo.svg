@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="nlsh logo">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#1E1B4B"/>
+    </linearGradient>
+  </defs>
+  <!-- rounded square background -->
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="url(#bg)"/>
+  <!-- terminal prompt chevron ">" -->
+  <path d="M 176 168 L 320 256 L 176 344"
+        fill="none" stroke="#FFFFFF" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- chat bubble tail, accent -->
+  <path d="M 336 360 Q 360 360 380 360 Q 400 360 400 380 L 400 400 Q 400 420 380 420 L 360 420 L 348 440 L 348 420 L 336 420 Q 316 420 316 400 L 316 380 Q 316 360 336 360 Z"
+        fill="#22D3EE"/>
+  <!-- sparkle inside the bubble -->
+  <circle cx="358" cy="390" r="6" fill="#1E1B4B"/>
+</svg>

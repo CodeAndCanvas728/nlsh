@@ -1,5 +1,14 @@
 # nlsh
 
+<p align="center">
+  <img src="logo.svg" alt="nlsh logo" width="160">
+</p>
+
+<p align="center">
+  <sub>The mark above is a hand-authored SVG, released under the same
+  MIT license as the code.</sub>
+</p>
+
 A natural-language shell. You describe what you want in plain words, a model
 turns it into shell commands, and nlsh checks the plan, shows it to you, and
 runs it once you approve it.
@@ -58,7 +67,33 @@ It does need a model to talk to:
 
 ## Install
 
-**Download a binary** from the
+**Install with Homebrew** (macOS and Linux):
+
+```sh
+brew tap CodeAndCanvas728/nlsh
+brew install CodeAndCanvas728/nlsh/nlsh
+```
+
+Homebrew won't load a formula from a tap that isn't trusted — but
+naming the formula on the command line, as above, is an exception: that
+one formula loads even from an untrusted tap. The trust step is what lets
+Homebrew load the tap's formulae by other routes — short-form
+`brew install nlsh`, `brew search`, and the like:
+
+```sh
+brew trust CodeAndCanvas728/nlsh
+```
+
+If your Homebrew refuses even that, trust the formula directly:
+
+```sh
+brew trust --formula CodeAndCanvas728/nlsh/nlsh
+```
+
+(Tested on Homebrew 7.0.10: the full-name form loads from an untrusted
+tap, and `--formula` is accepted as a fallback.)
+
+**Or download a binary** from the
 [releases page](https://github.com/CodeAndCanvas728/nlsh/releases). There is
 one for macOS, Linux and Windows, on both amd64 and arm64.
 
@@ -241,9 +276,10 @@ the wrong command.
   commands in it. What you save is what runs.
 
 The destructive patterns nlsh knows about are the ones that delete or
-destroy: `rm` in any form, `mkfs`, `dd` with `of=`, `diskutil erase`,
-`git reset --hard`, `git clean -f`, `git push --force`, `chmod -R 777`,
-`shred`, `truncate`, piping a download into a shell, and `defaults delete`.
+destroy: `rm` with something to delete or with `-r` or `-f`, `mkfs`, `dd`
+with `of=`, `diskutil erase` and its neighbours, `git reset --hard`,
+`git clean -f`, `git push --force`, `chmod -R 777`, `shred`,
+`truncate -s 0`, piping a download into a shell, and `defaults delete`.
 Each platform has its own list.
 
 ## Exit codes
@@ -309,9 +345,12 @@ cmd/nlsh/            the command itself
   shells/zsh.sh      the zsh integration, embedded into the binary
 internal/app/        plan → validate → approve → run
 internal/backend/    the model client, and the apfel launcher
+internal/cli/        the command line: options, and the usage text
 internal/validate/   checking a plan
 internal/guard/      deciding how risky a command is
 internal/platform/   what differs between operating systems
+internal/report/     what goes to stdout, and what goes to stderr
+internal/run/        running the commands: timeouts, interrupts, exit codes
 internal/shell/      parsing command lines
 internal/plan/       the plan contract and its JSON Schema
 ```
@@ -323,8 +362,14 @@ library.
 
 The validator, the risk classifier, the command-line parser and the
 tokenizer are unit-tested. The whole pipeline — plan, validate, approve,
-run — is tested end to end against a fake OpenAI-compatible server, so the
-tests never need a model and never touch the network.
+run — is tested end to end against a fake planner, so the tests never need a
+model and never touch the network. The model client is tested separately,
+against a fake OpenAI-compatible server.
+
+The runner has tests of its own, because that is where the awkward parts
+are: a command that runs out of time, one that forks and leaves the output
+pipe held open, an interrupt arriving as a real signal, and a command killed
+by a signal.
 
 ```sh
 go test ./...

@@ -9,9 +9,12 @@ commands, the plan is validated locally, shown for approval, and run.
 cmd/nlsh/            the command; shells/zsh.sh is the zsh integration (embedded)
 internal/app/        plan → validate → approve → run
 internal/backend/    talking to the model; apfel launcher
+internal/cli/        the command line: options, and the usage text
 internal/validate/   checking a plan
 internal/guard/      deciding how risky a command is
 internal/platform/   what differs between operating systems
+internal/report/     what goes to stdout, and what goes to stderr
+internal/run/        running the commands: timeouts, interrupts, exit codes
 internal/shell/      parsing command lines
 internal/plan/       the plan contract and its JSON Schema
 legacy/              the original Swift implementation (reference only)
@@ -40,7 +43,11 @@ exactly one release workflow for each, always the one cloning
 jobs, so a red build names the check that failed. The race-detector job
 installs a C compiler if the runner has none, and fails if it cannot: a
 green race job that quietly did not run the detector would make the
-release gate mean less than it looks.
+release gate mean less than it looks. A `tap` job clones the published
+tap and diffs its formula against `homebrew/nlsh.rb`, so a tap that
+drifts from the repository fails the build; it is network-dependent and
+runs only on pushes to `main`, so it is expected to be red there between
+release steps 7 and 8.
 
 The release is published by GitHub, from `.github/workflows/release.yaml`.
 The repository reaches GitHub through a Forgejo push mirror, so a `v*` tag
