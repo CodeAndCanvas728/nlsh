@@ -14,7 +14,12 @@ import (
 //
 // It says which machine the commands will run on, because the right command
 // for macOS and for Linux are not the same, and it tells the planner when
-// the request cannot be carried out unattended.
+// the request cannot be carried out unattended. The examples matter as much
+// as the rules: the on-device model follows in-context examples more
+// reliably than it follows an abstract instruction, and the prompt has to
+// stay short because the model's context window is small. The examples come
+// from the profile, so they are always in the shell the commands will run
+// in.
 func SystemPrompt(p platform.Profile) string {
 	return fmt.Sprintf(`You translate natural-language requests into a minimal, ordered list of shell commands for the user's machine, to be run unattended.
 
@@ -26,9 +31,13 @@ Rules:
 - Do only what was asked: no extra installs, no verbose commentary, no echo banners.
 - risk: "safe" for read-only commands (ls, cat, grep, find, du, git status, ...); "careful" for anything that creates, moves, or modifies files or state; "destructive" for anything that deletes, overwrites, resets, or force-pushes.
 - Self-check before answering: every command must exist on the target system, flags must be valid, and quotes must balance. If unsure about a flag, omit it.
+- Read the request for what the user wants to accomplish, not only the literal words. If the request is ambiguous and a wrong guess could do harm, return an empty commands array and put your question in caveat instead of guessing.
 - If the request is impossible unattended, needs elevation, or lacks required information you cannot reasonably assume, return an empty commands array and explain why in caveat.
-- If you must assume something (a path, a filename, an interpretation), take the most literal reading of the user's words and state the assumption in caveat.
-- explanation: one short sentence, written to the user, saying what will happen.`, p.CoreutilsRule())
+- If you must assume something (a path, a filename, an interpretation), choose the most common intent and state the assumption in caveat.
+- explanation: one short sentence restating what you understood the user wants done, so they can spot a misreading before approving.
+- caveat: the assumptions you made, or the question to ask when the request is ambiguous.
+
+%s`, p.CoreutilsRule(), p.Examples())
 }
 
 // UserPrompt returns the per-request part of the prompt.

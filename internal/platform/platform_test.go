@@ -2,7 +2,10 @@ package platform
 
 import (
 	"os/exec"
+	"strings"
 	"testing"
+
+	"github.com/CodeAndCanvas728/nlsh/internal/plan"
 )
 
 func TestUnixDestructiveDetection(t *testing.T) {
@@ -152,5 +155,65 @@ func TestCurrentProfileHasItsShell(t *testing.T) {
 	}
 	if _, err := exec.LookPath(shell[0]); err != nil {
 		t.Errorf("the current profile runs commands through %s, which is not on this machine", shell[0])
+	}
+}
+
+// TestExamplesMatchTheProfile guards the rule that platform differences
+// live in this package: the few-shot examples sent to the planner must be
+// written in the profile's own shell, so a Windows run is never shown POSIX
+// commands as model answers.
+func TestExamplesMatchTheProfile(t *testing.T) {
+	posix := []Profile{Darwin, Linux}
+	for _, p := range posix {
+		if got := p.Examples(); !strings.Contains(got, "du -ah .") {
+			t.Errorf("%s examples do not contain a POSIX example: %q", p.Name(), got)
+		}
+	}
+	win := Windows.Examples()
+	if !strings.Contains(win, "Get-ChildItem") || !strings.Contains(win, "Remove-Item") {
+		t.Errorf("windows examples are not PowerShell: %q", win)
+	}
+	if strings.Contains(win, "du -ah .") || strings.Contains(win, "cp -R .") {
+		t.Errorf("windows examples contain POSIX commands: %q", win)
+	}
+}
+
+// TestExamplesDecodeAsPlans keeps every example honest: each example line
+// that looks like JSON must decode as a plan with a valid risk label.
+func TestExamplesDecodeAsPlans(t *testing.T) {
+	for _, p := range []Profile{Darwin, Linux, Windows} {
+		examples := 0
+		for _, line := range strings.Split(p.Examples(), "\n") {
+			line = strings.TrimSpace(line)
+			if !strings.HasPrefix(line, "{") {
+				continue
+			}
+			examples++
+			pl, err := plan.Decode(line)
+			if err != nil {
+				t.Errorf("%s example %q does not decode as a plan: %v", p.Name(), line, err)
+				continue
+			}
+			for _, c := range pl.Commands {
+				if !plan.Risk(c.Risk).Valid() {
+					t.Errorf("%s example command %q has invalid risk %q", p.Name(), c.Command, c.Risk)
+				}
+			}
+		}
+		if examples < 2 {
+			t.Errorf("%s has %d examples, want at least 2", p.Name(), examples)
+		}
+	}
+}
+
+// TestExamplesTeachAskInsteadOfGuess: the ambiguous-and-harmful request
+// must be answered with an empty commands array and a question in caveat,
+// not with a destructive guess — an example that did the latter would train
+// the exact failure mode away.
+func TestExamplesTeachAskInsteadOfGuess(t *testing.T) {
+	for _, p := range []Profile{Darwin, Linux, Windows} {
+		if !strings.Contains(p.Examples(), `{"commands":[]`) {
+			t.Errorf("%s examples do not show the ask-instead-of-guess case", p.Name())
+		}
 	}
 }

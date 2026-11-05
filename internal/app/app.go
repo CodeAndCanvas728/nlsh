@@ -57,6 +57,11 @@ func (a *App) Run(ctx context.Context) int {
 	return a.Handle(ctx, a.Options.Request)
 }
 
+// maxRegenerations bounds how many times a plan that fails validation is
+// sent back to the model. One round fixes most issues; a second gives the
+// model a chance when the first correction introduced new problems.
+const maxRegenerations = 2
+
 // Handle plans, validates, approves and runs a single request.
 func (a *App) Handle(ctx context.Context, request string) int {
 	a.Reporter.Progress("thinking...")
@@ -68,37 +73,46 @@ func (a *App) Handle(ctx context.Context, request string) int {
 	}
 
 	issues := a.Checker.Issues(pl, request)
-	if len(issues) > 0 {
+	for round := 1; len(issues) > 0 && round <= maxRegenerations; round++ {
 		a.Reporter.Warn("plan validation failed:")
 		for _, issue := range issues {
 			a.Reporter.Note("  - %s", issue)
 		}
 		a.Reporter.Progress("regenerating...")
 		fixed, err := a.Planner.Regenerate(ctx, strings.Join(issues, "\n- "))
-		if err == nil {
-			if len(fixed.Commands) == 0 {
-				// The model gave up rather than fixed the plan. The
-				// original problems are still the reason there is no
-				// usable plan.
-				a.Reporter.Warn("the model could not produce a corrected plan")
-			} else {
-				pl = fixed
-				issues = a.Checker.Issues(pl, request)
-				if len(issues) == 0 {
-					a.Reporter.Progress("regenerated plan passes validation")
-				} else {
-					a.Reporter.Warn("remaining issues — review carefully:")
-					for _, issue := range issues {
-						a.Reporter.Note("  - %s", issue)
-					}
-				}
-			}
+		if err != nil {
+			a.Reporter.Warn("regeneration failed: %v", err)
+			break
+		}
+		if len(fixed.Commands) == 0 {
+			// The model gave up rather than fixed the plan. The
+			// original problems are still the reason there is no
+			// usable plan.
+			a.Reporter.Warn("the model could not produce a corrected plan")
+			break
+		}
+		pl = fixed
+		issues = a.Checker.Issues(pl, request)
+		if len(issues) == 0 {
+			a.Reporter.Progress("regenerated plan passes validation")
+		}
+	}
+	if len(issues) > 0 {
+		a.Reporter.Warn("remaining issues — review carefully:")
+		for _, issue := range issues {
+			a.Reporter.Note("  - %s", issue)
 		}
 	}
 
 	if a.Options.PrintMode {
 		for _, c := range pl.Commands {
 			a.Reporter.Command(c.Command)
+		}
+		if len(pl.Commands) == 0 && pl.Caveat != "" {
+			// The zsh integration captures stdout, so the model's
+			// question has to go to stderr or the buffer comes back
+			// empty with no explanation.
+			a.Reporter.Warn("no commands — %s", pl.Caveat)
 		}
 		if len(issues) > 0 {
 			a.Reporter.Error("validation issues remain; commands may be broken")

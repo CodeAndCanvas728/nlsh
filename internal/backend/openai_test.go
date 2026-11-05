@@ -188,3 +188,40 @@ func TestOpenAIRequiresAModel(t *testing.T) {
 		t.Fatal("expected an error when no model is configured")
 	}
 }
+
+func TestOpenAISendsTheConfiguredTemperature(t *testing.T) {
+	server := newRecordingServer(t)
+	planner := NewOpenAI(Config{BaseURL: server.URL + "/v1", Model: "test-model", System: "be helpful", Temperature: 0.7})
+
+	if _, err := planner.Plan(context.Background(), "list files"); err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	if len(server.requests) != 1 {
+		t.Fatalf("got %d requests, want 1", len(server.requests))
+	}
+	temp, ok := server.requests[0]["temperature"].(float64)
+	if !ok {
+		t.Fatalf("no temperature in request: %v", server.requests[0])
+	}
+	if temp != 0.7 {
+		t.Errorf("temperature = %v, want 0.7", temp)
+	}
+}
+
+func TestOpenAIDefaultsToGreedyDecoding(t *testing.T) {
+	// A plan should be the same every time it is asked for, so an unset
+	// temperature must mean 0, not some arbitrary sampling value.
+	if DefaultTemperature != 0 {
+		t.Errorf("DefaultTemperature = %v, want 0", DefaultTemperature)
+	}
+	server := newRecordingServer(t)
+	planner := NewOpenAI(Config{BaseURL: server.URL + "/v1", Model: "test-model", System: "be helpful"})
+
+	if _, err := planner.Plan(context.Background(), "list files"); err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	temp, ok := server.requests[0]["temperature"].(float64)
+	if !ok || temp != 0 {
+		t.Errorf("temperature = %v (present=%v), want 0", temp, ok)
+	}
+}

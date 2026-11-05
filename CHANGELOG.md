@@ -8,6 +8,7 @@ uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- --temperature / NLSH_TEMPERATURE sets the planner's sampling temperature (0-2). The default is now 0 (greedy decoding), so the same request plans the same way every time; it was a hardcoded 0.2.
 - A Homebrew tap, at `CodeAndCanvas728/homebrew-nlsh`, and a CI job that
   compares the formula in this repository against the copy in the tap, so a
   tap that drifts from the repository fails the build rather than
@@ -15,6 +16,8 @@ uses [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- A plan that fails validation is sent back to the model up to two times while issues remain, instead of exactly once.
+- The system prompt asks for the intent behind the request instead of the most literal reading, carries few-shot examples in the plan's JSON shape, and restates the understood intent in explanation so a misreading is visible at the approval step. An ambiguous request that a wrong guess could harm comes back as an empty plan with the question in caveat, instead of a literal guess.
 - The install section of the README says how to install it with Homebrew
   and what the tap is for.
 

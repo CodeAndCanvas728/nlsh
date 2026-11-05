@@ -29,6 +29,13 @@ type Profile interface {
 	// flavour of command-line tools it should target.
 	CoreutilsRule() string
 
+	// Examples is the few-shot example block given to the planner: real
+	// request/plan pairs in the plan's JSON shape, written in this
+	// profile's shell. The on-device model follows examples more reliably
+	// than abstract rules, so the examples must match the platform the
+	// commands will run on.
+	Examples() string
+
 	// IsDestructive reports whether a command deletes, overwrites,
 	// resets or otherwise destroys data.
 	IsDestructive(command string) bool
@@ -71,6 +78,27 @@ type unixProfile struct {
 func (p *unixProfile) Name() string          { return p.name }
 func (p *unixProfile) CoreutilsRule() string { return p.coreutils }
 func (p *unixProfile) Shell() []string       { return p.shell }
+func (p *unixProfile) Examples() string      { return posixExamples }
+
+// posixExamples are the few-shot examples for the macOS and Linux profiles.
+//
+// The first example is deliberately the ask-instead-of-guess case: an
+// ambiguous request that a wrong guess could harm must come back as an
+// empty commands array with the question in caveat, and an example that
+// answered it with a delete would train exactly the failure mode away.
+const posixExamples = `Examples
+Request: clean up my downloads folder
+{"commands":[],"explanation":"What counts as clutter in ~/Downloads, and what should happen to it?","caveat":"Ask: delete files older than a given age, or move them somewhere? Deleting is irreversible."}
+
+Request: what are the biggest files here?
+{"commands":[{"command":"du -ah . | sort -rh | head -n 10","risk":"safe"}],"explanation":"Show the 10 largest files under the current directory.","caveat":""}
+
+Request: back up the project before I refactor
+{"commands":[{"command":"cp -R . ../project-backup","risk":"careful"}],"explanation":"Copy the current directory to ../project-backup.","caveat":"Assumed the backup goes in the parent directory."}
+
+Request: delete the build folder
+{"commands":[{"command":"rm -rf ./build","risk":"destructive"}],"explanation":"Delete ./build.","caveat":"This cannot be undone."}
+`
 
 func (p *unixProfile) IsDestructive(cmd string) bool {
 	return matchesAny(p.destructive, cmd) || rmIsDestructive(cmd)

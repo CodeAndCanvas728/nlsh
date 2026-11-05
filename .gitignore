@@ -17,3 +17,6 @@ coverage.txt
 .idea/
 .vscode/
 *.swp
+# Trail agent learnings are local-only: this repository is publicly
+# mirrored, so nothing under .trail/ may ever be committed
+.trail/

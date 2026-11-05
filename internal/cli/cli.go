@@ -10,6 +10,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,6 +37,10 @@ type Options struct {
 	APIKey string
 	// Model is the model to ask for.
 	Model string
+	// Temperature is the sampling temperature for the planner. Nil means
+	// the default (greedy decoding); zero is a real value, so it is a
+	// pointer to tell "not set" apart from 0.
+	Temperature *float64
 	// Timeout bounds a single command. Zero means no limit.
 	Timeout time.Duration
 	// Request is the request in plain words.
@@ -51,11 +56,12 @@ var knownFlags = map[string]bool{
 	"-p": true, "--print": true,
 	"-h": true, "--help": true,
 	"-v": true, "--version": true,
-	"--base-url": true,
-	"--api-key":  true,
-	"--model":    true,
-	"--timeout":  true,
-	"--zsh-init": true,
+	"--base-url":    true,
+	"--api-key":     true,
+	"--model":       true,
+	"--temperature": true,
+	"--timeout":     true,
+	"--zsh-init":    true,
 }
 
 // Parse reads the command line.
@@ -103,6 +109,17 @@ func Parse(args []string) (Options, error) {
 				o.APIKey = value
 			case "--model":
 				o.Model = value
+			case "--temperature":
+				v, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					return o, fmt.Errorf("--temperature expects a number between 0 and 2, not %q", value)
+				}
+				// NaN fails every comparison, so the negated form is
+				// what actually rejects it.
+				if !(v >= 0 && v <= 2) {
+					return o, fmt.Errorf("--temperature must be between 0 and 2, not %q", value)
+				}
+				o.Temperature = &v
 			case "--timeout":
 				d, err := time.ParseDuration(value)
 				if err != nil {
@@ -137,7 +154,7 @@ func Parse(args []string) (Options, error) {
 func takeValue(args []string, i *int) (string, error) {
 	name := args[*i]
 	switch name {
-	case "--base-url", "--api-key", "--model", "--timeout":
+	case "--base-url", "--api-key", "--model", "--temperature", "--timeout":
 	default:
 		// A flag without a value.
 		return "", nil

@@ -35,6 +35,7 @@ func requirePOSIXShell(t *testing.T) {
 // fakePlanner returns canned plans and records what it was asked.
 type fakePlanner struct {
 	plans    []plan.Plan
+	regen    []plan.Plan
 	calls    int
 	feedback []string
 }
@@ -50,6 +51,11 @@ func (f *fakePlanner) Plan(ctx context.Context, request string) (plan.Plan, erro
 
 func (f *fakePlanner) Regenerate(ctx context.Context, feedback string) (plan.Plan, error) {
 	f.feedback = append(f.feedback, feedback)
+	if len(f.regen) > 0 {
+		p := f.regen[0]
+		f.regen = f.regen[1:]
+		return p, nil
+	}
 	if len(f.plans) > 1 {
 		return f.plans[1], nil
 	}
@@ -230,5 +236,88 @@ func TestValidationFailureTriggersOneRegeneration(t *testing.T) {
 	}
 	if !strings.Contains(planner.feedback[0], "not found in PATH") {
 		t.Errorf("feedback = %q, want it to mention the missing binary", planner.feedback[0])
+	}
+}
+
+func TestValidationFailureRegeneratesUntilClean(t *testing.T) {
+	requirePOSIXShell(t)
+	broken := plan.Plan{
+		Commands:    []plan.Command{{Command: "definitely-not-a-real-binary --wat", Risk: "safe"}},
+		Explanation: "Do something.",
+	}
+	good := plan.Plan{
+		Commands:    []plan.Command{{Command: "ls -l", Risk: "safe"}},
+		Explanation: "Do something.",
+	}
+	planner := &fakePlanner{
+		plans: []plan.Plan{broken},
+		regen: []plan.Plan{broken, good},
+	}
+	a, out, errOut := newTestApp(t, cli.Options{PrintMode: true}, planner)
+
+	status := a.Handle(context.Background(), "do something")
+
+	if status != ExitOK {
+		t.Errorf("status = %d, want 0", status)
+	}
+	if len(planner.feedback) != 2 {
+		t.Fatalf("got %d regenerations, want 2 (the first fix was still broken)", len(planner.feedback))
+	}
+	if got := out.String(); got != "ls -l\n" {
+		t.Errorf("stdout = %q, want the corrected plan's command", got)
+	}
+	if !strings.Contains(errOut.String(), "regenerated plan passes validation") {
+		t.Errorf("stderr = %q, want it to report the clean regeneration", errOut.String())
+	}
+}
+
+// TestPrintModeReportsCaveatWhenNoCommands: in --print mode an empty plan
+// (an ambiguous request answered with a question in caveat) must still
+// reach the user — on stderr, so the stdout contract holds — or the zsh
+// buffer comes back empty with no explanation.
+func TestPrintModeReportsCaveatWhenNoCommands(t *testing.T) {
+	requirePOSIXShell(t)
+	planner := &fakePlanner{plans: []plan.Plan{{
+		Commands:    nil,
+		Explanation: "What counts as clutter?",
+		Caveat:      "Ask: delete files older than a given age?",
+	}}}
+	a, out, errOut := newTestApp(t, cli.Options{PrintMode: true}, planner)
+
+	status := a.Handle(context.Background(), "clean up my downloads folder")
+
+	if status != ExitOK {
+		t.Errorf("status = %d, want 0", status)
+	}
+	if got := out.String(); got != "" {
+		t.Errorf("stdout = %q, want it empty (no commands)", got)
+	}
+	if !strings.Contains(errOut.String(), "delete files older than a given age") {
+		t.Errorf("stderr = %q, want it to carry the caveat", errOut.String())
+	}
+}
+
+func TestRegenerationStopsAtTheLimit(t *testing.T) {
+	requirePOSIXShell(t)
+	broken := plan.Plan{
+		Commands:    []plan.Command{{Command: "definitely-not-a-real-binary --wat", Risk: "safe"}},
+		Explanation: "Do something.",
+	}
+	planner := &fakePlanner{
+		plans: []plan.Plan{broken},
+		regen: []plan.Plan{broken, broken, broken},
+	}
+	a, _, errOut := newTestApp(t, cli.Options{PrintMode: true}, planner)
+
+	status := a.Handle(context.Background(), "do something")
+
+	if status != ExitInvalid {
+		t.Errorf("status = %d, want %d (issues remain)", status, ExitInvalid)
+	}
+	if len(planner.feedback) != maxRegenerations {
+		t.Errorf("got %d regenerations, want the cap of %d", len(planner.feedback), maxRegenerations)
+	}
+	if !strings.Contains(errOut.String(), "remaining issues") {
+		t.Errorf("stderr = %q, want it to report the remaining issues", errOut.String())
 	}
 }

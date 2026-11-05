@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/CodeAndCanvas728/nlsh/internal/app"
@@ -91,6 +92,18 @@ func makePlanner(opts cli.Options, profile platform.Profile, reporter *report.Re
 	if model == "" {
 		model = os.Getenv("NLSH_MODEL")
 	}
+	temperature := backend.DefaultTemperature
+	if opts.Temperature != nil {
+		temperature = *opts.Temperature
+	} else if env := os.Getenv("NLSH_TEMPERATURE"); env != "" {
+		v, err := strconv.ParseFloat(env, 64)
+		// NaN fails every comparison, so the negated form is what
+		// actually rejects it.
+		if err != nil || !(v >= 0 && v <= 2) {
+			return nil, fmt.Errorf("NLSH_TEMPERATURE must be a number between 0 and 2, not %q", env)
+		}
+		temperature = v
+	}
 
 	if base == "" {
 		return nil, errors.New("no model backend configured; point nlsh at an OpenAI-compatible server:\n" +
@@ -111,9 +124,10 @@ func makePlanner(opts cli.Options, profile platform.Profile, reporter *report.Re
 	}
 
 	return backend.NewOpenAI(backend.Config{
-		BaseURL: base,
-		APIKey:  key,
-		Model:   model,
-		System:  app.SystemPrompt(profile),
+		BaseURL:     base,
+		APIKey:      key,
+		Model:       model,
+		System:      app.SystemPrompt(profile),
+		Temperature: temperature,
 	}), nil
 }

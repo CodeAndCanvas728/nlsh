@@ -34,11 +34,11 @@ const Schema = `{
     },
     "explanation": {
       "type": "string",
-      "description": "One short sentence, written to the user, describing what the commands will do."
+      "description": "One short sentence restating what you understood the user wants done, so they can spot a misreading before approving."
     },
     "caveat": {
       "type": "string",
-      "description": "Brief note on anything assumed, uncertain or surprising. Empty string if there is nothing to say."
+      "description": "Assumptions made, or the question to ask when the request is ambiguous. Empty string if there is nothing to say."
     }
   },
   "required": ["commands", "explanation", "caveat"]

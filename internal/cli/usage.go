@@ -30,6 +30,9 @@ Model
     --base-url / NLSH_BASE_URL   e.g. http://localhost:11434/v1
     --api-key  / NLSH_API_KEY (or OPENAI_API_KEY)
     --model    / NLSH_MODEL      e.g. gpt-5-mini, qwen2.5-coder:7b
+    --temperature / NLSH_TEMPERATURE
+                                 sampling temperature 0-2; default 0 (greedy,
+                                 so the same request plans the same way)
   If the endpoint is a local one and nothing is listening, nlsh starts
   apfel --serve for you, which serves Apple Foundation Models on-device:
     brew install apfel

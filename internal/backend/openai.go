@@ -17,6 +17,12 @@ import (
 // DefaultTimeout bounds a single request to the model.
 const DefaultTimeout = 180 * time.Second
 
+// DefaultTemperature is the sampling temperature used when none is
+// configured. A plan should be the same every time it is asked for, so the
+// default is greedy decoding; raise it (--temperature / NLSH_TEMPERATURE)
+// only to let the model vary its phrasing.
+const DefaultTemperature = 0.0
+
 // Config describes an OpenAI-compatible endpoint.
 type Config struct {
 	// BaseURL is the root of the API, for example
@@ -28,6 +34,9 @@ type Config struct {
 	Model string
 	// System is the instruction that describes the task.
 	System string
+	// Temperature is the sampling temperature sent with every request.
+	// Zero means greedy decoding.
+	Temperature float64
 }
 
 // OpenAI talks to any server that speaks the OpenAI chat-completions API:
@@ -168,7 +177,7 @@ func (o *OpenAI) send(ctx context.Context, messages []message) (string, error) {
 	body := chatCompletion{
 		Model:       o.cfg.Model,
 		Messages:    messages,
-		Temperature: 0.2,
+		Temperature: o.cfg.Temperature,
 		ResponseFormat: map[string]any{
 			"type": "json_schema",
 			"json_schema": map[string]any{

@@ -137,6 +137,7 @@ nlsh                                    # interactive, keeps the conversation
 | `--base-url URL` | the OpenAI-compatible endpoint to ask |
 | `--api-key KEY` | bearer token to send with the request |
 | `--model NAME` | the model to ask for |
+| `--temperature T` | sampling temperature for the planner, `0`–`2`; the default is `0` (greedy), so the same request plans the same way |
 | `--zsh-init` | print the zsh integration script |
 | `-v`, `--version` | print the version |
 | `-h`, `--help` | print the usage text |
@@ -201,6 +202,7 @@ nlsh asks an OpenAI-compatible server for the plan:
 | `NLSH_BASE_URL` | `--base-url` | the endpoint, for example `http://localhost:11434/v1` |
 | `NLSH_API_KEY` | `--api-key` | bearer token; `OPENAI_API_KEY` also works |
 | `NLSH_MODEL` | `--model` | the model to ask for |
+| `NLSH_TEMPERATURE` | `--temperature` | sampling temperature `0`–`2`; default `0` (greedy) |
 
 ### On-device, on a Mac
 

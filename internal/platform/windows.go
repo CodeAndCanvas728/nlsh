@@ -27,6 +27,25 @@ func (p *windowsProfile) CoreutilsRule() string {
 		"- Quote paths with single quotes; do not use backslashes as escape characters."
 }
 
+func (p *windowsProfile) Examples() string { return windowsExamples }
+
+// windowsExamples are the few-shot examples for the Windows profile, in the
+// same shapes as the POSIX ones but in PowerShell. The first example is
+// deliberately the ask-instead-of-guess case, like the POSIX set.
+const windowsExamples = `Examples
+Request: clean up my downloads folder
+{"commands":[],"explanation":"What counts as clutter in Downloads, and what should happen to it?","caveat":"Ask: delete files older than a given age, or move them somewhere? Deleting is irreversible."}
+
+Request: what are the biggest files here?
+{"commands":[{"command":"Get-ChildItem -Recurse . | Sort-Object Length -Descending | Select-Object -First 10 FullName, Length","risk":"safe"}],"explanation":"Show the 10 largest files under the current directory.","caveat":""}
+
+Request: back up the project before I refactor
+{"commands":[{"command":"Copy-Item -Recurse . ..\\project-backup","risk":"careful"}],"explanation":"Copy the current directory to ..\\project-backup.","caveat":"Assumed the backup goes in the parent directory."}
+
+Request: delete the build folder
+{"commands":[{"command":"Remove-Item -Recurse -Force .\\build","risk":"destructive"}],"explanation":"Delete .\\build.","caveat":"This cannot be undone."}
+`
+
 // windowsDestructivePatterns are the destructive commands nlsh recognises
 // on Windows.
 var windowsDestructivePatterns = []*regexp.Regexp{

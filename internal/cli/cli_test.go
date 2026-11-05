@@ -68,6 +68,26 @@ func TestParse(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:    "temperature",
+			args:    []string{"--temperature", "0.5", "hello"},
+			request: "hello",
+			check: func(t *testing.T, o Options) {
+				if o.Temperature == nil || *o.Temperature != 0.5 {
+					t.Errorf("Temperature = %v, want 0.5", o.Temperature)
+				}
+			},
+		},
+		{
+			name:    "temperature zero is a real value",
+			args:    []string{"--temperature", "0", "hello"},
+			request: "hello",
+			check: func(t *testing.T, o Options) {
+				if o.Temperature == nil || *o.Temperature != 0 {
+					t.Errorf("Temperature = %v, want a set 0", o.Temperature)
+				}
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -97,6 +117,10 @@ func TestParseRejectsBadInput(t *testing.T) {
 		{"option after the request", []string{"hello", "--print"}, "after the request"},
 		{"bad timeout", []string{"--timeout", "soon", "hello"}, "duration"},
 		{"negative timeout", []string{"--timeout", "-5s", "hello"}, "negative"},
+		{"bad temperature", []string{"--temperature", "hot", "hello"}, "number between 0 and 2"},
+		{"temperature out of range", []string{"--temperature", "3", "hello"}, "between 0 and 2"},
+		{"nan temperature", []string{"--temperature", "NaN", "hello"}, "between 0 and 2"},
+		{"temperature after the request", []string{"hello", "--temperature"}, "after the request"},
 	}
 
 	for _, tc := range cases {
